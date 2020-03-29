@@ -17,6 +17,27 @@ pub fn hex_to_bytes(source: &str) -> Vec<u8> {
     bytes
 }
 
+const HEX_TABLE: &'static [char] = &[
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+];
+
+pub fn bytes_to_hex(bytes: &[u8]) -> String {
+    let mut result = String::with_capacity(bytes.len() * 4 / 3);
+    if bytes.len() == 0 {
+        return result;
+    }
+
+    for byte in bytes {
+        let higher = byte >> 4;
+        let lower = byte & 0x0f;
+
+        result.push(HEX_TABLE[higher as usize]);
+        result.push(HEX_TABLE[lower as usize]);
+    }
+
+    result
+}
+
 const BASE64_TABLE: &'static [char] = &[
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
     'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
