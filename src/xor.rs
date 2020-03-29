@@ -16,3 +16,13 @@ pub fn fixed_xor(bytes1: &[u8], bytes2: &[u8]) -> Vec<u8> {
 
     result
 }
+
+pub fn xor_with_byte(bytes: &[u8], key: u8) -> Vec<u8> {
+    let mut result = bytes.to_vec();
+
+    for byte in &mut result {
+        *byte = *byte ^ key;
+    }
+
+    result
+}
