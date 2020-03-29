@@ -47,3 +47,22 @@ pub fn english_score(plaintext: &[u8]) -> f64 {
 
     score
 }
+
+use super::xor::xor_with_byte;
+
+pub fn single_byte_key_with_best_score(ciphertext: &[u8]) -> u8 {
+    let mut best_score = std::f64::MIN;
+    let mut best_key = 0;
+
+    for possible_key in 0x00..=0xff {
+        let plaintext = xor_with_byte(&ciphertext, possible_key);
+        let score = english_score(&plaintext);
+
+        if score > best_score {
+            best_score = score;
+            best_key = possible_key;
+        }
+    }
+
+    best_key
+}
