@@ -3,7 +3,7 @@ const FREQUENCIES: &'static [f64] = &[
     6.749, 7.507, 1.929, 0.095, 5.987, 6.327, 9.356, 2.758, 0.978, 2.560, 0.150, 1.994, 0.077,
 ];
 
-const PUNCTUATION: &'static [u8] = b" !,.?\"'()@&%";
+const PUNCTUATION: &'static [u8] = b"\n !,.?\"'()@&%";
 
 pub fn english_score(plaintext: &[u8]) -> f64 {
     if plaintext.len() == 0 {
@@ -43,7 +43,7 @@ pub fn english_score(plaintext: &[u8]) -> f64 {
         score -= diff;
     }
 
-    score -= unexpected_count as f64;
+    score -= (unexpected_count * 2) as f64;
 
     score
 }
