@@ -1,4 +1,4 @@
-const CIPHERTEXTS: &'static str = include_str!("../../data/04.txt");
+const CIPHERTEXTS: &'static str = include_str!("../../data/01-04.txt");
 
 use cryptopals::encoding::hex_to_bytes;
 use cryptopals::english_score::english_score;
