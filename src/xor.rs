@@ -17,6 +17,17 @@ pub fn fixed_xor(bytes1: &[u8], bytes2: &[u8]) -> Vec<u8> {
     result
 }
 
+pub fn rotating_xor(bytes: &[u8], key: &[u8]) -> Vec<u8> {
+    let mut result = bytes.to_vec();
+    let key_len = key.len();
+
+    for (index, byte) in result.iter_mut().enumerate() {
+        *byte ^= key[index % key_len];
+    }
+
+    result
+}
+
 pub fn xor_with_byte(bytes: &[u8], key: u8) -> Vec<u8> {
     let mut result = bytes.to_vec();
 
