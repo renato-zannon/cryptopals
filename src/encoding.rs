@@ -10,7 +10,7 @@ pub fn hex_to_bytes(source: &str) -> Vec<u8> {
         let chr1 = hex_char_to_byte(chars[index]);
         let chr2 = hex_char_to_byte(chars[index + 1]);
 
-        let byte = (chr1 << 4) + chr2;
+        let byte = (chr1 << 4) | chr2;
         bytes.push(byte);
     }
 
