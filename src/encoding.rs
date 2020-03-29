@@ -17,6 +17,40 @@ pub fn hex_to_bytes(source: &str) -> Vec<u8> {
     bytes
 }
 
+pub fn base64_to_bytes(source: &str) -> Vec<u8> {
+    let chars: Vec<_> = source.chars().filter(|chr| !chr.is_whitespace()).collect();
+    let base64len = chars.len();
+
+    if base64len % 4 != 0 {
+        panic!("Invalid Base64 string length: {}", base64len);
+    }
+
+    let chr = |index| base64_char_to_byte(chars[index]);
+
+    let mut result: Vec<u8> = Vec::with_capacity(base64len * 2 / 3);
+
+    for index in (0..base64len).step_by(4) {
+        let n1 = (chr(index) << 2) | (chr(index + 1) >> 4);
+        result.push(n1);
+
+        if chars[index + 2] == '=' {
+            continue;
+        }
+
+        let n2 = (chr(index + 1) << 4) | (chr(index + 2) >> 2);
+        result.push(n2);
+
+        if chars[index + 3] == '=' {
+            continue;
+        }
+
+        let n3 = (chr(index + 2) << 6) | chr(index + 3);
+        result.push(n3);
+    }
+
+    result
+}
+
 const HEX_TABLE: &'static [char] = &[
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
 ];
@@ -99,4 +133,44 @@ fn hex_char_to_byte(chr: char) -> u8 {
         'a'..='f' => (chr as u8) - ('a' as u8) + 10,
         _ => panic!("Invalid character on hex string: {}", chr),
     }
+}
+
+fn base64_char_to_byte(chr: char) -> u8 {
+    match chr {
+        'A'..='Z' => (chr as u8) - ('A' as u8),
+        'a'..='z' => (chr as u8) - ('a' as u8) + 26,
+        '0'..='9' => (chr as u8) - ('0' as u8) + 52,
+        '+' => 62,
+        '/' => 63,
+        _ => panic!("Invalid Base64 character {:?}", chr),
+    }
+}
+
+#[test]
+fn test_decode_base64() {
+    assert_eq!(
+        base64_to_bytes("YW55IGNhcm5hbCBwbGVhc3VyZS4="),
+        b"any carnal pleasure."
+    );
+
+    assert_eq!(base64_to_bytes("TWFu"), &[77, 97, 110]);
+    assert_eq!(base64_to_bytes("TWE="), &[77, 97]);
+    assert_eq!(base64_to_bytes("TQ=="), &[77]);
+}
+
+#[test]
+fn test_decode_wrapped_base64() {
+    let encoded = "\
+TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlz
+IHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2Yg
+dGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGlu
+dWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRo
+ZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=";
+
+    let decoded =
+    b"Man is distinguished, not only by his reason, but by this singular passion from other animals, \
+which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable \
+generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
+
+    assert_eq!(base64_to_bytes(encoded), decoded.as_ref());
 }
