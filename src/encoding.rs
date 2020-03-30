@@ -2,6 +2,11 @@ pub fn hex_to_base64(source: &str) -> String {
     bytes_to_base64(&hex_to_bytes(source))
 }
 
+pub fn block_pretty_print(bytes: &[u8]) -> String {
+    use crate::string_wrap::StringWrap;
+    format!("{}", bytes_to_hex(bytes).hex_pp(32))
+}
+
 pub fn hex_to_bytes(source: &str) -> Vec<u8> {
     let chars: Vec<_> = source.chars().collect();
     let mut bytes: Vec<u8> = Vec::with_capacity(chars.len() / 2);
