@@ -35,17 +35,19 @@ pub fn aes_128_cbc_encrypt(plaintext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
     const BLOCK_SIZE: usize = 16;
 
     let mut previous_block = iv.to_vec();
-    let ecb_encrypted = aes_128_ecb_encrypt(&pkcs7_pad(plaintext, BLOCK_SIZE), key, false);
-    let mut result = Vec::with_capacity(ecb_encrypted.len());
+    let padded_plaintext = pkcs7_pad(plaintext, BLOCK_SIZE);
 
-    for block_start in (0..ecb_encrypted.len()).step_by(BLOCK_SIZE) {
-        let block_end = (block_start + BLOCK_SIZE).min(ecb_encrypted.len());
+    let mut result = Vec::with_capacity(padded_plaintext.len());
+
+    for block_start in (0..padded_plaintext.len()).step_by(BLOCK_SIZE) {
+        let block_end = block_start + BLOCK_SIZE;
         let block_size = block_end - block_start;
 
-        let new_block = fixed_xor(
+        let input_plaintext = fixed_xor(
             &previous_block[0..block_size],
-            &ecb_encrypted[block_start..block_end],
+            &padded_plaintext[block_start..block_end],
         );
+        let new_block = aes_128_ecb_encrypt(&input_plaintext, key, false);
         result.extend_from_slice(&new_block);
 
         previous_block = new_block;
