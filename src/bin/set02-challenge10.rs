@@ -7,7 +7,7 @@ const CIPHERTEXT: &'static str = include_str!("../../data/02-10.txt");
 
 fn main() {
     let ciphertext = base64_to_bytes(CIPHERTEXT);
-    let plaintext = aes_128_cbc_decrypt(&ciphertext, KEY, IV);
+    let plaintext = aes_128_cbc_decrypt(&ciphertext, KEY, IV).unwrap();
 
     println!(
         "decrypted plaintext:\n{}",

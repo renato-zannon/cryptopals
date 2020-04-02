@@ -56,7 +56,11 @@ pub fn aes_128_cbc_encrypt(plaintext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
     result
 }
 
-pub fn aes_128_cbc_decrypt(ciphertext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
+pub fn aes_128_cbc_decrypt(
+    ciphertext: &[u8],
+    key: &[u8],
+    iv: &[u8],
+) -> Result<Vec<u8>, &'static str> {
     const BLOCK_SIZE: usize = 16;
 
     let mut previous_block = iv;

@@ -13,11 +13,20 @@ pub fn pkcs7_pad(bytes: &[u8], block_size: usize) -> Vec<u8> {
     result
 }
 
-pub fn pkcs7_unpad(bytes: &[u8]) -> Vec<u8> {
-    let mut result = bytes.to_vec();
-    let pad_size = result[result.len() - 1] as usize;
+pub fn pkcs7_unpad(bytes: &[u8]) -> Result<Vec<u8>, &'static str> {
+    let pad_byte = bytes[bytes.len() - 1];
+    let pad_size = pad_byte as usize;
 
-    result.truncate(result.len() - pad_size);
+    if pad_size > bytes.len() {
+        return Err("Bad Padding");
+    }
 
-    result
+    for &byte in bytes.iter().rev().take(pad_size) {
+        if byte != pad_byte {
+            return Err("Bad Padding");
+        }
+    }
+
+    let result = bytes[0..bytes.len() - pad_size].to_vec();
+    Ok(result)
 }
