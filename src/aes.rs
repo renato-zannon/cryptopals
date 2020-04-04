@@ -1,6 +1,8 @@
 use super::padding::{pkcs7_pad, pkcs7_unpad};
 use super::xor::fixed_xor;
 
+const BLOCK_SIZE: usize = 16;
+
 pub fn aes_128_ecb_encrypt(plaintext: &[u8], key: &[u8], autopad: bool) -> Vec<u8> {
     use openssl::symm::{Cipher, Crypter, Mode};
     let cipher = Cipher::aes_128_ecb();
@@ -32,8 +34,6 @@ pub fn aes_128_ecb_decrypt(ciphertext: &[u8], key: &[u8], autopad: bool) -> Vec<
 }
 
 pub fn aes_128_cbc_encrypt(plaintext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
-    const BLOCK_SIZE: usize = 16;
-
     let mut previous_block = iv.to_vec();
     let padded_plaintext = pkcs7_pad(plaintext, BLOCK_SIZE);
 
@@ -61,8 +61,6 @@ pub fn aes_128_cbc_decrypt(
     key: &[u8],
     iv: &[u8],
 ) -> Result<Vec<u8>, &'static str> {
-    const BLOCK_SIZE: usize = 16;
-
     let mut previous_block = iv;
     let ecb_decrypted = aes_128_ecb_decrypt(ciphertext, key, false);
     let mut result = Vec::with_capacity(ecb_decrypted.len());
@@ -81,4 +79,36 @@ pub fn aes_128_cbc_decrypt(
     }
 
     pkcs7_unpad(&result)
+}
+
+pub fn aes_128_ctr_encrypt(plaintext: &[u8], key: &[u8], nonce: &[u8]) -> Vec<u8> {
+    let keystream = aes_128_ctr_keystream(key, nonce);
+
+    plaintext
+        .iter()
+        .zip(keystream)
+        .map(|(plaintext_byte, keystream_byte)| plaintext_byte ^ keystream_byte)
+        .collect()
+}
+
+pub fn aes_128_ctr_decrypt(ciphertext: &[u8], key: &[u8], nonce: &[u8]) -> Vec<u8> {
+    let keystream = aes_128_ctr_keystream(key, nonce);
+
+    ciphertext
+        .iter()
+        .zip(keystream)
+        .map(|(ciphertext_byte, keystream_byte)| ciphertext_byte ^ keystream_byte)
+        .collect()
+}
+
+fn aes_128_ctr_keystream<'k>(key: &'k [u8], nonce: &'k [u8]) -> impl Iterator<Item = u8> + 'k {
+    let mut block = [0; BLOCK_SIZE];
+    (&mut block[..BLOCK_SIZE / 2]).copy_from_slice(nonce);
+
+    (0u64..).flat_map(move |block_counter| {
+        let counter_bytes = block_counter.to_le_bytes();
+        (&mut block[BLOCK_SIZE / 2..]).copy_from_slice(&counter_bytes);
+
+        aes_128_ecb_encrypt(&block, key, false)
+    })
 }
