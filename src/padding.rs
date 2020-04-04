@@ -17,7 +17,7 @@ pub fn pkcs7_unpad(bytes: &[u8]) -> Result<Vec<u8>, &'static str> {
     let pad_byte = bytes[bytes.len() - 1];
     let pad_size = pad_byte as usize;
 
-    if pad_size > bytes.len() {
+    if pad_size == 0 || pad_size > bytes.len() {
         return Err("Bad Padding");
     }
 
