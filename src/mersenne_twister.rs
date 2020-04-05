@@ -39,7 +39,18 @@ pub struct MersenneTwister {
 
 impl MersenneTwister {
     pub fn new<T: IntoSeed>(seed: T) -> MersenneTwister {
-        let mut state = Vec::with_capacity(constants::N);
+        let mut twister = MersenneTwister {
+            state: Vec::with_capacity(constants::N),
+            index: constants::N,
+        };
+        twister.seed(seed);
+
+        twister
+    }
+
+    pub fn seed<T: IntoSeed>(&mut self, seed: T) {
+        let state = &mut self.state;
+        state.clear();
 
         state.push(Wrapping(seed.into_seed()));
         for i in 1..constants::N {
@@ -49,10 +60,7 @@ impl MersenneTwister {
             state.push(new);
         }
 
-        MersenneTwister {
-            state,
-            index: constants::N,
-        }
+        self.index = constants::N;
     }
 
     pub fn from_state(state: Vec<u32>) -> MersenneTwister {
