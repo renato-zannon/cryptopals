@@ -53,15 +53,10 @@ impl MersenneTwister {
     pub fn extract_number(&mut self) -> u32 {
         self.twist_if_needed();
 
-        let mut y = self.state[self.index];
-        y ^= (y >> constants::U) & constants::D;
-        y ^= (y << constants::S) & constants::B;
-        y ^= (y << constants::T) & constants::C;
-        y ^= y >> constants::L;
-
+        let y = temper(self.state[self.index].0);
         self.index += 1;
 
-        y.0
+        y
     }
 
     fn twist_if_needed(&mut self) {
@@ -108,5 +103,73 @@ impl Iterator for MersenneTwister {
 
     fn next(&mut self) -> Option<u32> {
         Some(self.extract_number())
+    }
+}
+
+pub fn temper(value: u32) -> u32 {
+    let mut y = Wrapping(value);
+
+    y ^= (y >> constants::U) & constants::D;
+    y ^= (y << constants::S) & constants::B;
+    y ^= (y << constants::T) & constants::C;
+    y ^= y >> constants::L;
+
+    y.0
+}
+
+pub fn untemper(value: u32) -> u32 {
+    let mut y = Wrapping(value);
+
+    y = untemper_right(y, constants::L, Wrapping(0xFFFFFFFF));
+    y = untemper_left(y, constants::T, constants::C);
+    y = untemper_left(y, constants::S, constants::B);
+    y = untemper_right(y, constants::U, constants::D);
+
+    y.0
+}
+
+fn untemper_left(
+    value: Wrapping<u32>,
+    shift_size: usize,
+    xor_mask: Wrapping<u32>,
+) -> Wrapping<u32> {
+    let mut y = value;
+
+    for current_shift in (0..32).step_by(shift_size) {
+        // only consider shift_size bits of the xor_mask at a time
+        let bitmask = Wrapping(((1 << shift_size) - 1) << current_shift);
+
+        y ^= (y << shift_size) & xor_mask & bitmask;
+    }
+
+    y
+}
+
+fn untemper_right(
+    value: Wrapping<u32>,
+    shift_size: usize,
+    xor_mask: Wrapping<u32>,
+) -> Wrapping<u32> {
+    let mut y = value;
+
+    for current_shift in (0..32).step_by(shift_size).rev() {
+        // only consider shift_size bits of the xor_mask at a time
+        let bitmask = Wrapping(((1 << shift_size) - 1) << current_shift);
+
+        y ^= (y >> shift_size) & xor_mask & bitmask;
+    }
+
+    y
+}
+
+#[test]
+fn test_untemper() {
+    use rand::{thread_rng, Rng};
+
+    let mut rng = thread_rng();
+
+    for _ in 0..10_000 {
+        let original: u32 = rng.gen();
+        assert_eq!(original, untemper(temper(original)));
     }
 }
