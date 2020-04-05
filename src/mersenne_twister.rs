@@ -1,6 +1,9 @@
 pub mod cipher;
+mod into_seed;
 
 use std::num::Wrapping;
+
+use self::into_seed::IntoSeed;
 
 mod constants {
     use std::num::Wrapping;
@@ -35,10 +38,10 @@ pub struct MersenneTwister {
 }
 
 impl MersenneTwister {
-    pub fn new(seed: u32) -> MersenneTwister {
+    pub fn new<T: IntoSeed>(seed: T) -> MersenneTwister {
         let mut state = Vec::with_capacity(constants::N);
 
-        state.push(Wrapping(seed));
+        state.push(Wrapping(seed.into_seed()));
         for i in 1..constants::N {
             let prev = state[i - 1];
 
