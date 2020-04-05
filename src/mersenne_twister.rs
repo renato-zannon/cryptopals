@@ -50,6 +50,23 @@ impl MersenneTwister {
         }
     }
 
+    pub fn from_state(state: Vec<u32>) -> MersenneTwister {
+        if state.len() != constants::N {
+            panic!(
+                "State should have exactly {} members (had {})",
+                constants::N,
+                state.len()
+            );
+        }
+
+        let state = state.into_iter().map(Wrapping).collect();
+
+        MersenneTwister {
+            state,
+            index: constants::N,
+        }
+    }
+
     pub fn extract_number(&mut self) -> u32 {
         self.twist_if_needed();
 
