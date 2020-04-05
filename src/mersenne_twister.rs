@@ -1,3 +1,5 @@
+pub mod cipher;
+
 use std::num::Wrapping;
 
 mod constants {
