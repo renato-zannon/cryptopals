@@ -6,7 +6,7 @@ use cryptopals::mersenne_twister::{untemper, MersenneTwister};
 const RNG_STATE_SIZE: usize = 624;
 
 fn main() {
-    let mut original_twister = MersenneTwister::new(random());
+    let mut original_twister = MersenneTwister::new(random::<u32>());
     let mut reconstructed_state = Vec::with_capacity(RNG_STATE_SIZE);
 
     for number in original_twister.by_ref().take(RNG_STATE_SIZE) {
