@@ -1,3 +1,4 @@
+use colored::Colorize;
 use rand::prelude::*;
 
 use cryptopals::mersenne_twister::{untemper, MersenneTwister};
@@ -16,7 +17,11 @@ fn main() {
     let spliced_twister = MersenneTwister::from_state(reconstructed_state);
 
     for (original, spliced) in original_twister.zip(spliced_twister).take(100) {
-        let sign = if original == spliced { '✓' } else { '✗' };
+        let sign = if original == spliced {
+            "✓".green()
+        } else {
+            "✗".red()
+        };
 
         println!("{} 0x{:08X} == 0x{:08X}", sign, original, spliced);
     }
