@@ -1,6 +1,7 @@
 pub mod cipher;
 mod into_seed;
 
+use std::borrow::BorrowMut;
 use std::num::Wrapping;
 
 use self::into_seed::IntoSeed;
@@ -126,6 +127,20 @@ impl MersenneTwister {
 
         self.index = 0;
     }
+
+    pub fn byte_iter(&mut self) -> ByteIterator<&mut MersenneTwister> {
+        ByteIterator {
+            twister: self,
+            current_number: [None, None, None, None],
+        }
+    }
+
+    pub fn into_byte_iter(self) -> ByteIterator<MersenneTwister> {
+        ByteIterator {
+            twister: self,
+            current_number: [None, None, None, None],
+        }
+    }
 }
 
 impl Iterator for MersenneTwister {
@@ -133,6 +148,29 @@ impl Iterator for MersenneTwister {
 
     fn next(&mut self) -> Option<u32> {
         Some(self.extract_number())
+    }
+}
+
+pub struct ByteIterator<T> {
+    twister: T,
+    current_number: [Option<u8>; 4],
+}
+
+impl<T: BorrowMut<MersenneTwister>> Iterator for ByteIterator<T> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<u8> {
+        let existing_option: Option<&mut Option<u8>> =
+            self.current_number.iter_mut().find(|opt| opt.is_some());
+
+        match existing_option {
+            Some(byte) => byte.take(),
+            None => {
+                let [n1, n2, n3, n4] = self.twister.borrow_mut().next()?.to_be_bytes();
+                self.current_number = [Some(n1), Some(n2), Some(n3), Some(n4)];
+                self.next()
+            }
+        }
     }
 }
 

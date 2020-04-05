@@ -11,5 +11,5 @@ pub fn encrypt<T: IntoSeed>(plaintext: &[u8], key: T) -> Vec<u8> {
 pub use encrypt as decrypt;
 
 fn keystream<T: IntoSeed>(key: T) -> impl Iterator<Item = u8> {
-    MersenneTwister::new(key).flat_map(|number| number.to_be_bytes().to_vec())
+    MersenneTwister::new(key).into_byte_iter()
 }
