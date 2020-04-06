@@ -101,6 +101,29 @@ pub fn aes_128_ctr_decrypt(ciphertext: &[u8], key: &[u8], nonce: &[u8]) -> Vec<u
         .collect()
 }
 
+pub fn aes_128_ctr_edit(
+    original_ciphertext: &[u8],
+    key: &[u8],
+    nonce: &[u8],
+    offset: usize,
+    new_plaintext: &[u8],
+) -> Vec<u8> {
+    if new_plaintext.len() + offset > original_ciphertext.len() {
+        panic!("Can't edit beyond the existing ciphertext");
+    }
+
+    let keystream = aes_128_ctr_keystream(key, nonce).skip(offset);
+    let new_ciphertext = keystream.zip(new_plaintext).map(|(a, b)| a ^ b);
+
+    let mut result = original_ciphertext.to_vec();
+
+    for (index, byte) in new_ciphertext.enumerate() {
+        result[index + offset] = byte;
+    }
+
+    result
+}
+
 fn aes_128_ctr_keystream<'k>(key: &'k [u8], nonce: &'k [u8]) -> impl Iterator<Item = u8> + 'k {
     let mut block = [0; BLOCK_SIZE];
     (&mut block[..BLOCK_SIZE / 2]).copy_from_slice(nonce);
