@@ -6,6 +6,7 @@ pub mod english_score;
 #[allow(non_snake_case)]
 pub mod mersenne_twister;
 pub mod padding;
+pub mod sha1;
 pub mod string_wrap;
 pub mod utils;
 pub mod xor;
