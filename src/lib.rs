@@ -12,7 +12,7 @@ pub mod utils;
 pub mod xor;
 
 pub mod prelude {
-    pub use crate::encoding::{base64_to_bytes, block_pretty_print};
+    pub use crate::encoding::{base64_to_bytes, block_pretty_print, bytes_to_hex};
     pub use crate::padding::{pkcs7_pad, pkcs7_unpad};
     pub use crate::utils::check_mark;
     pub use crate::{aes, encoding, xor};
