@@ -6,78 +6,109 @@ const H2: Wrapping<u32> = Wrapping(0x98BADCFE);
 const H3: Wrapping<u32> = Wrapping(0x10325476);
 const H4: Wrapping<u32> = Wrapping(0xC3D2E1F0);
 
-pub fn sha1(message: &[u8]) -> Vec<u8> {
-    let (mut h0, mut h1, mut h2, mut h3, mut h4) = (H0, H1, H2, H3, H4);
+pub struct SHA1 {
+    h0: Wrapping<u32>,
+    h1: Wrapping<u32>,
+    h2: Wrapping<u32>,
+    h3: Wrapping<u32>,
+    h4: Wrapping<u32>,
+}
 
-    let message = preprocess(message);
-
-    let mut w = Vec::with_capacity(80);
-
-    for chunk in message.chunks(512 / 8) {
-        w.clear();
-        w.resize(80, Wrapping(0));
-
-        for i in (0..chunk.len()).step_by(4) {
-            let number = u32::from_be_bytes([chunk[i], chunk[i + 1], chunk[i + 2], chunk[i + 3]]);
-            w[i] = Wrapping(number);
+impl SHA1 {
+    pub fn with_defaults() -> SHA1 {
+        SHA1 {
+            h0: H0,
+            h1: H1,
+            h2: H2,
+            h3: H3,
+            h4: H4,
         }
-
-        for i in 16..80 {
-            let result = w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16];
-            w[i] = Wrapping(result.0.rotate_left(1));
-        }
-
-        let (mut a, mut b, mut c, mut d, mut e) = (h0, h1, h2, h3, h4);
-
-        for i in 0..80 {
-            let f;
-            let k;
-
-            match i {
-                0..=19 => {
-                    f = (b & c) | ((!b) & d);
-                    k = Wrapping(0x5A827999);
-                }
-
-                20..=39 => {
-                    f = b ^ c ^ d;
-                    k = Wrapping(0x6ED9EBA1);
-                }
-
-                40..=59 => {
-                    f = (b & c) | (b & d) | (c & d);
-                    k = Wrapping(0x8F1BBCDC);
-                }
-
-                _ => {
-                    f = b ^ c ^ d;
-                    k = Wrapping(0xCA62C1D6);
-                }
-            }
-
-            let temp = Wrapping(a.0.rotate_left(5)) + f + e + k + w[i];
-            e = d;
-            d = c;
-            c = Wrapping(b.0.rotate_left(30));
-            b = a;
-            a = temp;
-        }
-
-        h0 += a;
-        h1 += b;
-        h2 += c;
-        h3 += d;
-        h4 += e;
     }
 
-    let mut result = Vec::with_capacity(20);
-    result.extend_from_slice(&h0.0.to_be_bytes());
-    result.extend_from_slice(&h1.0.to_be_bytes());
-    result.extend_from_slice(&h2.0.to_be_bytes());
-    result.extend_from_slice(&h3.0.to_be_bytes());
-    result.extend_from_slice(&h4.0.to_be_bytes());
+    pub fn with_registers(h0: u32, h1: u32, h2: u32, h3: u32, h4: u32) -> SHA1 {
+        SHA1 {
+            h0: Wrapping(h0),
+            h1: Wrapping(h1),
+            h2: Wrapping(h2),
+            h3: Wrapping(h3),
+            h4: Wrapping(h4),
+        }
+    }
 
-    result
+    pub fn compute(mut self, message: &[u8]) -> Vec<u8> {
+        let mut w = Vec::with_capacity(80);
+
+        for chunk in message.chunks(512 / 8) {
+            w.clear();
+            for i in (0..chunk.len()).step_by(4) {
+                let number =
+                    u32::from_be_bytes([chunk[i], chunk[i + 1], chunk[i + 2], chunk[i + 3]]);
+                w.push(Wrapping(number));
+            }
+            w.resize(80, Wrapping(0));
+
+            for i in 16..80 {
+                let result = w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16];
+                w[i] = Wrapping(result.0.rotate_left(1));
+            }
+
+            let (mut a, mut b, mut c, mut d, mut e) = (self.h0, self.h1, self.h2, self.h3, self.h4);
+
+            for i in 0..80 {
+                let f;
+                let k;
+
+                match i {
+                    0..=19 => {
+                        f = (b & c) | ((!b) & d);
+                        k = Wrapping(0x5A827999);
+                    }
+
+                    20..=39 => {
+                        f = b ^ c ^ d;
+                        k = Wrapping(0x6ED9EBA1);
+                    }
+
+                    40..=59 => {
+                        f = (b & c) | (b & d) | (c & d);
+                        k = Wrapping(0x8F1BBCDC);
+                    }
+
+                    _ => {
+                        f = b ^ c ^ d;
+                        k = Wrapping(0xCA62C1D6);
+                    }
+                }
+
+                let temp = Wrapping(a.0.rotate_left(5)) + f + e + k + w[i];
+                e = d;
+                d = c;
+                c = Wrapping(b.0.rotate_left(30));
+                b = a;
+                a = temp;
+            }
+
+            self.h0 += a;
+            self.h1 += b;
+            self.h2 += c;
+            self.h3 += d;
+            self.h4 += e;
+        }
+
+        let mut result = Vec::with_capacity(20);
+        result.extend_from_slice(&self.h0.0.to_be_bytes());
+        result.extend_from_slice(&self.h1.0.to_be_bytes());
+        result.extend_from_slice(&self.h2.0.to_be_bytes());
+        result.extend_from_slice(&self.h3.0.to_be_bytes());
+        result.extend_from_slice(&self.h4.0.to_be_bytes());
+
+        result
+    }
+}
+
+pub fn sha1(message: &[u8]) -> Vec<u8> {
+    let message = preprocess(message);
+    SHA1::with_defaults().compute(&message)
 }
 
 fn preprocess(message: &[u8]) -> Vec<u8> {
