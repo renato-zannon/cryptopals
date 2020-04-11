@@ -32,6 +32,17 @@ pub fn pkcs7_unpad(bytes: &[u8]) -> Result<Vec<u8>, &'static str> {
 }
 
 pub fn md_padding(message: &[u8], previous_bits: u64) -> Vec<u8> {
+    md_padding_inner(message, previous_bits, u64::to_be_bytes)
+}
+
+pub fn md_padding_le_count(message: &[u8], previous_bits: u64) -> Vec<u8> {
+    md_padding_inner(message, previous_bits, u64::to_le_bytes)
+}
+
+fn md_padding_inner<F>(message: &[u8], previous_bits: u64, count_transform: F) -> Vec<u8>
+where
+    F: Fn(u64) -> [u8; 8],
+{
     let current_mod = (message.len() * 8 + 1) % 512;
     let zeroes_to_append = if current_mod < 448 {
         448 - current_mod
@@ -52,7 +63,7 @@ pub fn md_padding(message: &[u8], previous_bits: u64) -> Vec<u8> {
 
     // add 64-bit length
     let total_len_bits = (message.len() * 8) as u64 + previous_bits;
-    result.extend_from_slice(&total_len_bits.to_be_bytes());
+    result.extend_from_slice(&count_transform(total_len_bits));
 
     result
 }

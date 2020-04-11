@@ -3,6 +3,7 @@ pub mod bytes;
 pub mod distance;
 pub mod encoding;
 pub mod english_score;
+pub mod md4;
 #[allow(non_snake_case)]
 pub mod mersenne_twister;
 pub mod padding;
