@@ -39,6 +39,10 @@ impl SHA1 {
         }
     }
 
+    pub fn set_message_bits(&mut self, new_value: u64) {
+        self.message_bits = new_value;
+    }
+
     pub fn update(&mut self, message: &[u8]) {
         self.message_bits += (message.len() * 8) as u64;
         self.process_message(message);
@@ -156,8 +160,8 @@ pub fn sha1(message: &[u8]) -> Vec<u8> {
     sha1.finalize()
 }
 
-fn with_md_padding(message: &[u8], total_len_bits: u64) -> Vec<u8> {
-    let current_mod = (total_len_bits + 1) % 512;
+pub fn with_md_padding(message: &[u8], total_len_bits: u64) -> Vec<u8> {
+    let current_mod = (message.len() * 8 + 1) % 512;
     let zeroes_to_append = if current_mod < 448 {
         448 - current_mod
     } else {
