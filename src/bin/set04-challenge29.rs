@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::iter::repeat;
 use std::mem;
 
-use cryptopals::{prelude::*, sha1};
+use cryptopals::{padding, prelude::*, sha1};
 
 const U32_SIZE: usize = mem::size_of::<u32>();
 
@@ -27,7 +27,7 @@ fn main() {
         );
 
         let total_original_length = secret_length + message.len();
-        initialized_sha1.set_message_bits((total_original_length * 8) as u64);
+        initialized_sha1.set_processed_bits((total_original_length * 8) as u64);
         initialized_sha1.update(SUFFIX);
         let new_mac = initialized_sha1.finalize();
 
@@ -58,7 +58,7 @@ fn add_glue_padding(message: &[u8], secret_length: usize) -> Vec<u8> {
         .chain(message.iter().copied())
         .collect();
 
-    let mut padded = sha1::with_md_padding(&with_fake_secret, (with_fake_secret.len() * 8) as u64);
+    let mut padded = padding::md_padding(&with_fake_secret, 0);
     padded.split_off(secret_length)
 }
 

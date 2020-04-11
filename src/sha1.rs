@@ -1,6 +1,8 @@
 use std::mem;
 use std::num::Wrapping;
 
+use crate::padding;
+
 const H0: u32 = 0x67452301;
 const H1: u32 = 0xEFCDAB89;
 const H2: u32 = 0x98BADCFE;
@@ -18,7 +20,7 @@ pub struct SHA1 {
 
     w_buffer: Vec<Wrapping<u32>>,
     incomplete_chunk: Vec<u8>,
-    message_bits: u64,
+    processed_bits: u64,
 }
 
 impl SHA1 {
@@ -35,20 +37,15 @@ impl SHA1 {
             h4: Wrapping(h4),
             w_buffer: Vec::with_capacity(80),
             incomplete_chunk: Vec::with_capacity(CHUNK_SIZE_BYTES),
-            message_bits: 0,
+            processed_bits: 0,
         }
     }
 
-    pub fn set_message_bits(&mut self, new_value: u64) {
-        self.message_bits = new_value;
+    pub fn set_processed_bits(&mut self, processed_bits: u64) {
+        self.processed_bits = processed_bits;
     }
 
-    pub fn update(&mut self, message: &[u8]) {
-        self.message_bits += (message.len() * 8) as u64;
-        self.process_message(message);
-    }
-
-    fn process_message(&mut self, mut message: &[u8]) {
+    pub fn update(&mut self, mut message: &[u8]) {
         if self.incomplete_chunk.len() + message.len() < CHUNK_SIZE_BYTES {
             self.incomplete_chunk.extend_from_slice(message);
             return;
@@ -80,8 +77,10 @@ impl SHA1 {
     }
 
     pub fn finalize(mut self) -> Vec<u8> {
-        let final_chunk = with_md_padding(&self.incomplete_chunk, self.message_bits);
-        self.process_chunk(&final_chunk);
+        let final_chunks = padding::md_padding(&self.incomplete_chunk, self.processed_bits);
+        for chunk in final_chunks.chunks(CHUNK_SIZE_BYTES) {
+            self.process_chunk(&chunk);
+        }
 
         let mut result = Vec::with_capacity(20);
         result.extend_from_slice(&self.h0.0.to_be_bytes());
@@ -151,6 +150,8 @@ impl SHA1 {
         self.h2 += c;
         self.h3 += d;
         self.h4 += e;
+
+        self.processed_bits += (chunk.len() * 8) as u64;
     }
 }
 
@@ -160,42 +161,8 @@ pub fn sha1(message: &[u8]) -> Vec<u8> {
     sha1.finalize()
 }
 
-pub fn with_md_padding(message: &[u8], total_len_bits: u64) -> Vec<u8> {
-    let current_mod = (message.len() * 8 + 1) % 512;
-    let zeroes_to_append = if current_mod < 448 {
-        448 - current_mod
-    } else {
-        (512 - current_mod) + 448
-    };
-
-    let bytes_to_append = (zeroes_to_append as usize + 1) / 8;
-    let mut result = Vec::with_capacity(message.len() + bytes_to_append + 4);
-    result.extend_from_slice(message);
-
-    let first_byte = 1 << 7;
-    result.push(first_byte);
-
-    for _ in 1..bytes_to_append {
-        result.push(0);
-    }
-
-    // add 64-bit length
-    result.extend_from_slice(&total_len_bits.to_be_bytes());
-
-    result
-}
-
 #[cfg(test)]
 use crate::encoding::bytes_to_hex;
-
-#[test]
-fn test_preprocess() {
-    let result = with_md_padding(b"abc", 3 * 8);
-
-    assert_eq!((result.len() * 8) % 512, 0);
-    assert_eq!(result[3], 1 << 7);
-    assert_eq!(result[result.len() - 1], 24);
-}
 
 #[test]
 fn test_empty_string() {
@@ -211,6 +178,15 @@ fn test_sha1_quick_brown_fox() {
     let hex_result = bytes_to_hex(&result);
 
     assert_eq!(hex_result, "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12");
+}
+
+#[test]
+fn test_127byte_message() {
+    let message = [0; 127];
+    let result = sha1(&message);
+    let hex_result = bytes_to_hex(&result);
+
+    assert_eq!(hex_result, "6053d761084e9eb4ec12810110de07e7320787b6");
 }
 
 #[test]
