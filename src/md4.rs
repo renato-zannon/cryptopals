@@ -36,6 +36,11 @@ impl MD4 {
             processed_bits: 0,
         }
     }
+
+    pub fn set_processed_bits(&mut self, processed_bits: u64) {
+        self.processed_bits = processed_bits;
+    }
+
     pub fn update(&mut self, mut message: &[u8]) {
         if self.incomplete_chunk.len() + message.len() < CHUNK_SIZE_BYTES {
             self.incomplete_chunk.extend_from_slice(message);
