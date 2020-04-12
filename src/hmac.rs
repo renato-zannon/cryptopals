@@ -22,7 +22,7 @@ pub fn hmac_sha1(key: &[u8], message: &[u8]) -> Vec<u8> {
 
 pub fn hmac<H: HashFunction>(key: &[u8], message: &[u8]) -> Vec<u8> {
     let derived_key = match key.len().cmp(&H::BLOCK_SIZE) {
-        Ordering::Greater => H::compute(message),
+        Ordering::Greater => H::compute(key),
         Ordering::Equal => key.to_vec(),
 
         Ordering::Less => {
