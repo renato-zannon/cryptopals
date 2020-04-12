@@ -5,7 +5,7 @@ authors = ["Renato Zannon <renato@rrsz.com.br>"]
 edition = "2018"
 
 [dependencies]
-tokio = { version = "0.2", features = ["macros", "time"] }
+tokio = { version = "0.2", features = ["macros", "time", "rt-threaded"] }
 warp = "0.2"
 cryptopals = { path = ".." }
 serde = "1.0"

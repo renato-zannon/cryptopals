@@ -10,6 +10,10 @@ rand = "0.7"
 percent-encoding = "2.1.0"
 phf = { version = "0.8.0", features = ["macros"] }
 colored = "1.9.3"
+reqwest = "0.10"
+tokio = { version = "0.2", features = ["macros", "rt-threaded"] }
+statrs = "0.12.0"
+futures = "0.3.4"
 
 [workspace]
 members = ["hmac-server"]
