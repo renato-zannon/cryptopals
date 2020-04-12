@@ -3,10 +3,16 @@ use warp::http::StatusCode;
 use warp::Filter;
 
 use std::convert::Infallible;
-use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use std::time::Duration;
 
-use cryptopals::{encoding::hex_to_bytes, hmac};
+use cryptopals::{
+    encoding::{bytes_to_hex, hex_to_bytes},
+    hmac,
+};
 
 #[derive(Deserialize)]
 struct Query {
@@ -30,6 +36,8 @@ struct Oracle {
     key: Vec<u8>,
 }
 
+static HAS_PRINTED_SIGNATURE: AtomicBool = AtomicBool::new(false);
+
 impl Oracle {
     fn new() -> Self {
         use rand::{distributions::Standard, thread_rng, Rng};
@@ -40,6 +48,11 @@ impl Oracle {
 
     async fn validate(&self, message: &[u8], signature: &[u8], delay_millis: u64) -> bool {
         let computed_signature = hmac::hmac_sha1(&self.key, message);
+
+        if !HAS_PRINTED_SIGNATURE.load(Ordering::Relaxed) {
+            println!("Actual signature: {}", bytes_to_hex(&computed_signature));
+            HAS_PRINTED_SIGNATURE.store(true, Ordering::Relaxed);
+        }
 
         for (b1, b2) in computed_signature.iter().zip(signature) {
             if b1 != b2 {
