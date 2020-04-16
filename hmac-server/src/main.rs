@@ -3,10 +3,7 @@ use warp::http::StatusCode;
 use warp::Filter;
 
 use std::convert::Infallible;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
+use std::sync::{Arc, Once};
 use std::time::Duration;
 
 use cryptopals::{
@@ -36,7 +33,7 @@ struct Oracle {
     key: Vec<u8>,
 }
 
-static HAS_PRINTED_SIGNATURE: AtomicBool = AtomicBool::new(false);
+static PRINT_SIGNATURE: Once = Once::new();
 
 impl Oracle {
     fn new() -> Self {
@@ -49,10 +46,9 @@ impl Oracle {
     async fn validate(&self, message: &[u8], signature: &[u8], delay_millis: u64) -> bool {
         let computed_signature = hmac::hmac_sha1(&self.key, message);
 
-        if !HAS_PRINTED_SIGNATURE.load(Ordering::Relaxed) {
+        PRINT_SIGNATURE.call_once(|| {
             println!("Actual signature: {}", bytes_to_hex(&computed_signature));
-            HAS_PRINTED_SIGNATURE.store(true, Ordering::Relaxed);
-        }
+        });
 
         for (b1, b2) in computed_signature.iter().zip(signature) {
             if b1 != b2 {
