@@ -1,6 +1,7 @@
 pub mod aes;
 pub mod bytes;
 pub mod dh;
+pub mod dh_actor;
 pub mod distance;
 pub mod encoding;
 pub mod english_score;
