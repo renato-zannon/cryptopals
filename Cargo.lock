@@ -156,12 +156,16 @@ version = "0.1.0"
 dependencies = [
  "colored",
  "futures",
+ "lazy_static",
  "openssl",
  "percent-encoding",
  "phf 0.8.0",
  "rand 0.7.3",
  "reqwest",
  "rug",
+ "serde",
+ "serde_derive",
+ "serde_json",
  "statrs",
  "tokio",
 ]

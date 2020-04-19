@@ -6,14 +6,11 @@ use std::time::Duration;
 use cryptopals::{
     aes, dh,
     dh_actor::{self, Protocol},
+    quote,
 };
 
 fn main() {
-    let actor1 = dh_actor::build_actor(
-        None,
-        Some(b"some very important message".to_vec()),
-        actor_1_process,
-    );
+    let actor1 = dh_actor::build_actor(None, Some(quote::random().into_bytes()), actor_1_process);
 
     let (monster_handle, monster_tx) = intercept(actor1.tx.clone());
 
@@ -21,26 +18,22 @@ fn main() {
 
     let intercepted_messages = monster_handle.join().unwrap();
 
-    println!("\nIntercepted messages:");
+    println!("Intercepted messages:");
     for message in intercepted_messages {
         println!("    - {}", String::from_utf8_lossy(&message));
     }
 }
 
-fn actor_1_process(message: Vec<u8>) -> dh_actor::DHAction {
-    println!("Actor1 received {:?}", String::from_utf8_lossy(&message));
-
+fn actor_1_process(_message: Vec<u8>) -> dh_actor::DHAction {
     dh_actor::DHAction {
         reply_to_peer: None,
         keep_running: false,
     }
 }
 
-fn actor_2_process(message: Vec<u8>) -> dh_actor::DHAction {
-    println!("Actor2 received {:?}", String::from_utf8_lossy(&message));
-
+fn actor_2_process(_message: Vec<u8>) -> dh_actor::DHAction {
     dh_actor::DHAction {
-        reply_to_peer: Some(b"very important secret indeed".to_vec()),
+        reply_to_peer: Some(quote::random().into_bytes()),
         keep_running: false,
     }
 }

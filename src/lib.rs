@@ -10,6 +10,7 @@ pub mod md4;
 #[allow(non_snake_case)]
 pub mod mersenne_twister;
 pub mod padding;
+pub mod quote;
 pub mod sha1;
 pub mod string_wrap;
 pub mod utils;
