@@ -4,14 +4,14 @@ use rug::{ops::PowAssign, Assign, Integer};
 
 use crate::sha1;
 
-#[derive(Debug)]
-pub struct PublicKey(Integer);
+#[derive(Debug, Clone)]
+pub struct PublicKey(pub Integer);
 
 #[derive(Debug)]
-pub struct PrivateKey(Integer);
+pub struct PrivateKey(pub Integer);
 
 #[derive(PartialEq, Eq, Debug)]
-pub struct SessionKey(Integer);
+pub struct SessionKey(pub Integer);
 
 const DEFAULT_MODULUS: &str = "\
   ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024\
@@ -26,9 +26,10 @@ const DEFAULT_MODULUS: &str = "\
 
 const DEFAULT_BASE: u32 = 2;
 
+#[derive(Clone, Debug)]
 pub struct Parameters {
-    modulus: Integer,
-    base: Integer,
+    pub modulus: Integer,
+    pub base: Integer,
 }
 
 impl Parameters {
