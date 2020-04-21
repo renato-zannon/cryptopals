@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{sha1, xor};
+use crate::{sha1, sha256, xor};
 
 pub trait HashFunction {
     const BLOCK_SIZE: usize;
@@ -16,8 +16,20 @@ impl HashFunction for sha1::SHA1 {
     }
 }
 
+impl HashFunction for sha256::SHA256 {
+    const BLOCK_SIZE: usize = 64;
+
+    fn compute(message: &[u8]) -> Vec<u8> {
+        sha256::sha256(message)
+    }
+}
+
 pub fn hmac_sha1(key: &[u8], message: &[u8]) -> Vec<u8> {
     hmac::<sha1::SHA1>(key, message)
+}
+
+pub fn hmac_sha256(key: &[u8], message: &[u8]) -> Vec<u8> {
+    hmac::<sha256::SHA256>(key, message)
 }
 
 pub fn hmac<H: HashFunction>(key: &[u8], message: &[u8]) -> Vec<u8> {
