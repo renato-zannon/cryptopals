@@ -21,7 +21,7 @@ const NIST_PRIME_STR: &str = "\
 ";
 
 lazy_static! {
-    static ref NIST_PRIME: Integer = bignum::from_hex(NIST_PRIME_STR);
+    pub static ref NIST_PRIME: Integer = bignum::from_hex(NIST_PRIME_STR);
     static ref BASE: Integer = Integer::from(2);
     static ref K_PARAM: Integer = Integer::from(3);
 }
