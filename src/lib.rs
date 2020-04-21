@@ -1,4 +1,5 @@
 pub mod aes;
+pub mod bignum;
 pub mod bytes;
 pub mod dh;
 pub mod dh_actor;

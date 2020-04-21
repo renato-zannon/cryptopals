@@ -1,8 +1,8 @@
 use rand::prelude::*;
 use rug::integer::Order;
-use rug::{ops::PowAssign, Assign, Integer};
+use rug::Integer;
 
-use crate::sha1;
+use crate::{bignum, sha1};
 
 #[derive(Debug, Clone)]
 pub struct PublicKey(pub Integer);
@@ -34,9 +34,7 @@ pub struct Parameters {
 
 impl Parameters {
     pub fn default() -> Self {
-        let mut modulus = Integer::new();
-        modulus.assign(Integer::parse_radix(DEFAULT_MODULUS, 16).unwrap());
-
+        let modulus = bignum::from_hex(DEFAULT_MODULUS);
         let base = Integer::from(DEFAULT_BASE);
 
         Self { modulus, base }
@@ -74,8 +72,8 @@ impl SessionKey {
 }
 
 pub fn generate_keypair(base: &Integer, modulus: &Integer) -> (PublicKey, PrivateKey) {
-    let private_key = random_integer(&modulus, &mut thread_rng());
-    let public_key = modexp(&base, &private_key, &modulus);
+    let private_key = bignum::random_integer(&modulus, &mut thread_rng());
+    let public_key = bignum::modexp(&base, &private_key, &modulus);
 
     (PublicKey(public_key), PrivateKey(private_key))
 }
@@ -85,50 +83,6 @@ pub fn derive_session_key(
     private_key: &PrivateKey,
     modulus: &Integer,
 ) -> SessionKey {
-    let key = modexp(&public_key.0, &private_key.0, modulus);
+    let key = bignum::modexp(&public_key.0, &private_key.0, modulus);
     SessionKey(key)
-}
-
-pub fn modexp(base: &Integer, exponent: &Integer, modulus: &Integer) -> Integer {
-    if modulus == &1 {
-        return Integer::from(0);
-    }
-
-    let mut result = Integer::from(1);
-    let mut base = Integer::from(base % modulus);
-    let mut exponent = Integer::from(exponent);
-
-    while exponent > 0 {
-        if exponent.is_odd() {
-            result *= &base;
-            result %= modulus;
-        }
-
-        exponent >>= 1;
-
-        base.pow_assign(2);
-        base %= modulus;
-    }
-
-    result
-}
-
-pub fn random_integer<R: Rng>(modulus: &Integer, rng: &mut R) -> Integer {
-    let bit_count = modulus.significant_bits() as usize;
-    let byte_count = modulus.significant_digits::<u8>();
-
-    let mut result = Integer::with_capacity(bit_count);
-    let mut digits: Vec<u8> = vec![0; byte_count];
-
-    loop {
-        rng.fill(&mut digits[..]);
-
-        result.assign_digits(&digits, Order::Msf);
-
-        if &result < modulus {
-            break;
-        }
-    }
-
-    result
 }
