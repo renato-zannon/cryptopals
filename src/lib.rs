@@ -14,6 +14,7 @@ pub mod padding;
 pub mod quote;
 pub mod sha1;
 pub mod sha256;
+pub mod srp;
 pub mod string_wrap;
 pub mod utils;
 pub mod xor;
