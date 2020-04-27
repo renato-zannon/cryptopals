@@ -12,6 +12,7 @@ pub mod md4;
 pub mod mersenne_twister;
 pub mod padding;
 pub mod quote;
+pub mod rsa;
 pub mod sha1;
 pub mod sha256;
 pub mod srp;
