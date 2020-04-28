@@ -4,14 +4,14 @@ use crate::bignum::{self, invmod, lcm};
 
 #[derive(Debug)]
 pub struct PublicKey {
-    modulus: Integer,
-    exponent: Integer,
+    pub modulus: Integer,
+    pub exponent: Integer,
 }
 
 #[derive(Debug)]
 pub struct PrivateKey {
-    modulus: Integer,
-    exponent: Integer,
+    pub modulus: Integer,
+    pub exponent: Integer,
 }
 
 pub fn keygen(keysize: u32, public_exponent: Integer) -> (PublicKey, PrivateKey) {
