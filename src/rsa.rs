@@ -59,21 +59,20 @@ pub fn decrypt(private_key: &PrivateKey, message: &[u8]) -> Vec<u8> {
     bignum::to_bytes(&decrypted)
 }
 
-pub const SHA256_ASN1_MARKER: &[u8] = &[
-    0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05,
-    0x00, 0x04, 0x20,
+pub const SHA1_ASN1_MARKER: &[u8] = &[
+    0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14,
 ];
 
 pub fn pkcs1_sign(private_key: &PrivateKey, message: &[u8]) -> Vec<u8> {
-    let message_hash = crate::sha256::sha256(message);
+    let message_hash = crate::sha1::sha1(message);
     let mod_size = private_key.modulus.significant_digits::<u8>();
 
     let mut bytes_to_sign: Vec<u8> =
-        vec![0xff; mod_size - SHA256_ASN1_MARKER.len() - message_hash.len()];
+        vec![0xff; mod_size - SHA1_ASN1_MARKER.len() - message_hash.len()];
     bytes_to_sign[0] = 0x00;
     bytes_to_sign[1] = 0x01;
 
-    bytes_to_sign.extend_from_slice(SHA256_ASN1_MARKER);
+    bytes_to_sign.extend_from_slice(SHA1_ASN1_MARKER);
     bytes_to_sign.extend_from_slice(&message_hash);
 
     let to_sign = bignum::from_bytes(&bytes_to_sign);

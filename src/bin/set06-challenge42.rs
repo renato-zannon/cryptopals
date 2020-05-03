@@ -1,17 +1,15 @@
-use cryptopals::{bignum, prelude::*, rsa, sha256::sha256};
+use cryptopals::{bignum, prelude::*, rsa, sha1::sha1};
 
 const MESSAGE: &[u8] = b"hi mom";
 
 fn main() {
-    let message_hash = sha256(MESSAGE);
+    let message_hash = sha1(MESSAGE);
     let signer = secret::Signer::new();
 
     let mod_size = signer.public_key().modulus.significant_digits::<u8>();
 
-    let mut target_signed = vec![0x00, 0x01];
-    target_signed.extend(std::iter::repeat(0xff).take(8));
-    target_signed.push(0x00);
-    target_signed.extend_from_slice(rsa::SHA256_ASN1_MARKER);
+    let mut target_signed = vec![0x00, 0x01, 0x00];
+    target_signed.extend_from_slice(rsa::SHA1_ASN1_MARKER);
     target_signed.extend_from_slice(&message_hash);
     target_signed.resize(mod_size, 0xff);
 
@@ -26,7 +24,7 @@ fn main() {
 }
 
 mod secret {
-    use cryptopals::{bignum, rsa, sha256::sha256};
+    use cryptopals::{bignum, rsa, sha1::sha1};
     use rug::Integer;
 
     pub struct Signer {
@@ -38,7 +36,7 @@ mod secret {
 
     impl Signer {
         pub fn new() -> Self {
-            let (public_key, private_key) = rsa::keygen(2048, Integer::from(3));
+            let (public_key, private_key) = rsa::keygen(1024, Integer::from(3));
 
             Self {
                 public_key,
@@ -52,6 +50,7 @@ mod secret {
 
         pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
             let signed_bytes = self.to_signed_bytes(signature);
+
             let mut sig_iter = signed_bytes.iter();
 
             // We ignore the initial 0x00 because it is always lost in the
@@ -60,26 +59,20 @@ mod secret {
                 return false;
             }
 
-            let mut pad_size = 0;
             loop {
                 match sig_iter.next() {
                     Some(0x00) => break,
-                    Some(0xff) => {
-                        pad_size += 1;
-                    }
+                    Some(0xff) => continue,
                     _ => return false,
                 }
-            }
-            if pad_size < 8 {
-                return false;
             }
 
             // verify ASN.1 marker
             {
                 let marker_matches = sig_iter
                     .by_ref()
-                    .take(rsa::SHA256_ASN1_MARKER.len())
-                    .zip(rsa::SHA256_ASN1_MARKER)
+                    .take(rsa::SHA1_ASN1_MARKER.len())
+                    .zip(rsa::SHA1_ASN1_MARKER)
                     .all(|(b1, b2)| b1 == b2);
 
                 if !marker_matches {
@@ -89,7 +82,7 @@ mod secret {
 
             // verify message hash
             {
-                let message_hash = sha256(&message);
+                let message_hash = sha1(&message);
                 let hash_matches = sig_iter
                     .by_ref()
                     .take(message_hash.len())
