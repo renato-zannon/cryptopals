@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 tokio = { version = "0.2", features = ["macros", "time", "rt-threaded"] }
-warp = "0.2"
+warp = "0.3"
 cryptopals = { path = ".." }
 serde = "1.0"
 serde_derive = "1.0"
